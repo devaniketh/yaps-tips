@@ -1,8 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
-
-
-pragma solidity ^0.8.0;
 
 contract Escrow {
     struct Yap {
@@ -12,26 +9,28 @@ contract Escrow {
     }
 
     mapping(uint256 => Yap) public yaps;
-    uint256 public yapCounter;
 
     event YapCreated(uint256 yapId, address user, uint256 amount);
     event YapCompleted(uint256 yapId, address yapper);
 
-    function deposit(uint256 yapId, uint256 amount) external payable {
-        require(msg.value == amount, "Incorrect amount sent");
-        yaps[yapCounter] = Yap({
+    function deposit(uint256 yapId) external payable {
+        require(yaps[yapId].user == address(0), "Yap ID already exists");
+
+        yaps[yapId] = Yap({
             user: msg.sender,
-            amount: amount,
+            amount: msg.value, // Use msg.value directly
             isCompleted: false
         });
-        emit YapCreated(yapCounter, msg.sender, amount);
-        yapCounter++;
+
+        emit YapCreated(yapId, msg.sender, msg.value);
     }
 
     function release(uint256 yapId, address yapper) external {
         require(!yaps[yapId].isCompleted, "Yap already completed");
+
         yaps[yapId].isCompleted = true;
         payable(yapper).transfer(yaps[yapId].amount);
+
         emit YapCompleted(yapId, yapper);
     }
 }
